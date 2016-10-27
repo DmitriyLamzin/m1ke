@@ -1,9 +1,12 @@
 package com.github.dmitriylamzin.view;
 
 
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Scanner;
 
+@Component
 public class TerminalView implements View {
 
     @Override

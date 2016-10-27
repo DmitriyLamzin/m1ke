@@ -1,14 +1,13 @@
 package com.github.dmitriylamzin.service;
 
-import com.github.dmitriylamzin.service.AppService;
-import com.github.dmitriylamzin.service.BranchService;
-import com.github.dmitriylamzin.service.IntegrationService;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-
+@Service
 public class CommandDispatcherService {
 
     private final Logger log = Logger.getLogger(this.getClass());
@@ -31,8 +30,11 @@ public class CommandDispatcherService {
             QUIT
     };
 
+    @Autowired
     private AppService appService;
+//    @Autowired
     private BranchService branchService;
+//    @Autowired
     private IntegrationService integrationService;
 
 
