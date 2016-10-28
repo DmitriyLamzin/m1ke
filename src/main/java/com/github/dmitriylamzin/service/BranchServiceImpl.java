@@ -36,20 +36,23 @@ public class BranchServiceImpl implements BranchService {
     }
 
     @Override
-    public String createBranch(String... branchCommandArgs) throws IOException {
+    public String createBranch(String... branchCommandArgs) {
         getBranchStoragePath();
 
         if (branchCommandArgs.length > 0){
             String branchName = branchCommandArgs[0];
             Path branchFile = branchStorage.resolve(branchName);
             if (Files.notExists(branchFile)){
-                Files.createFile(branchFile);
                 Branch creatingBranch = new Branch(branchName);
                 try (FileOutputStream fileOutputStream = new FileOutputStream(branchFile.toString());
                      ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
+                    Files.createFile(branchFile);
                     objectOutputStream.writeObject(creatingBranch);
                     objectOutputStream.close();
                 }catch (FileNotFoundException e){
+                    log.error(e.getMessage(), e);
+                    return "branch.has.not.been.created";
+                }catch (IOException e){
                     log.error(e.getMessage(), e);
                     return "branch.has.not.been.created";
                 }
