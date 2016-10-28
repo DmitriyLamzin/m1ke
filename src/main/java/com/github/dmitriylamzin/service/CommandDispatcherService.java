@@ -32,7 +32,7 @@ public class CommandDispatcherService {
 
     @Autowired
     private AppService appService;
-//    @Autowired
+    @Autowired
     private BranchService branchService;
 //    @Autowired
     private IntegrationService integrationService;
@@ -50,7 +50,7 @@ public class CommandDispatcherService {
     }
 
     public ArrayList<String> dispatchCommand(String... args) throws NullPointerException{
-        log.info("Dispatch command with args: " + args);
+        log.info("Dispatch command with args: " + Arrays.asList(args));
         ArrayList<String> response = new ArrayList<>();
         String command = args[0];
         String[] commandArgs = new String[0];
@@ -85,6 +85,7 @@ public class CommandDispatcherService {
                     String createBranchResponse = branchService.createBranch(commandArgs);
                     response.add("m1ke.create.branch.proceed.status");
                     response.add(createBranchResponse);
+
                     break;
                 }case GET_BRANCH:{
                     String getBranchResponse =  branchService.getBranch(commandArgs);
