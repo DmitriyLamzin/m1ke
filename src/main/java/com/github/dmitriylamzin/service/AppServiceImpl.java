@@ -1,5 +1,6 @@
 package com.github.dmitriylamzin.service;
 
+import com.github.dmitriylamzin.domain.Head;
 import com.github.dmitriylamzin.view.View;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,9 @@ public class AppServiceImpl implements AppService {
 
     @Autowired
     private View view;
+
+    @Autowired
+    private HeadService headService;
 
     private final Path currentWorkingDirectory;
 
@@ -63,16 +67,17 @@ public class AppServiceImpl implements AppService {
         Path branchDirectoryToCreate = mikeMainDirectory.resolve(branchDirectory);
         Path commitDirectoryToCreate = mikeMainDirectory.resolve(commitDirectory);
         Path objectDirectoryToCreate = mikeMainDirectory.resolve(objectDirectory);
-        Files.setAttribute(mikeMainDirectory, "dos:hidden", true);
         Files.createDirectories(objectDirectoryToCreate);
         Files.createDirectories(commitDirectoryToCreate);
         Files.createDirectories(branchDirectoryToCreate);
+        Files.setAttribute(mikeMainDirectory, "dos:hidden", true);
 
     }
 
     private void createHeadFile() throws IOException {
         Path headFilePath = mikeMainDirectory.resolve(headFilePathString);
-        Files.createFile(headFilePath);
+        Head head = new Head();
+        headService.saveHead(head);
 
     }
 
