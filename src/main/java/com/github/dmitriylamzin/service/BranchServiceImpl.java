@@ -46,7 +46,6 @@ public class BranchServiceImpl implements BranchService {
                 Branch creatingBranch = new Branch(branchName);
                 try (FileOutputStream fileOutputStream = new FileOutputStream(branchFile.toString());
                      ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
-                    Files.createFile(branchFile);
                     objectOutputStream.writeObject(creatingBranch);
                     objectOutputStream.close();
                 }catch (FileNotFoundException e){
@@ -58,8 +57,10 @@ public class BranchServiceImpl implements BranchService {
                 }
             }
         }else {
+            log.info("branch name is not specified");
             return "branch.name.is.not.specified";
         }
+        log.info("branch has been successfully created");
         return "branch.has.been.created";
     }
 
