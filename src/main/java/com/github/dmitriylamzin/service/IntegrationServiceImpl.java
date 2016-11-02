@@ -1,0 +1,152 @@
+package com.github.dmitriylamzin.service;
+
+import com.github.dmitriylamzin.domain.Branch;
+import com.github.dmitriylamzin.domain.Commit;
+import com.github.dmitriylamzin.service.helper.PathResolver;
+import com.github.dmitriylamzin.view.View;
+import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+
+@Service
+public class IntegrationServiceImpl implements IntegrationService {
+    private Logger log = Logger.getLogger(this.getClass());
+    private final String changedListFilePath = "changedList";
+    @Autowired
+    private View view;
+    @Autowired
+    private HeadService headService;
+    @Autowired
+    private BranchService branchService;
+    @Autowired
+    private CommitService commitService;
+
+    @Override
+    public List<String> integrate() {
+        log.info("integrate command");
+        ArrayList<String> existedFileArray = collectExistedFiles();
+        Branch currentBranch = headService.getHead().getCurrentBranch();
+        List<String> changedList;
+
+        if (currentBranch == null){
+            log.debug("current branch null");
+            branchService.createBranch("master");
+            branchService.getBranch("master");
+            view.showInfo("master.branch.created");
+            changedList = existedFileArray;
+
+        }else if (currentBranch.getLastCommit() == null || currentBranch.getLastCommit().getFilePathKeys().isEmpty()){
+            log.debug(existedFileArray);
+            changedList = existedFileArray;
+        }else {
+            TreeMap<String, String> committedFiles = currentBranch.getLastCommit().getFilePaths();
+            changedList = compareFiles(existedFileArray, committedFiles);
+        }
+        try (FileOutputStream fileOutputStream = new FileOutputStream(
+                new File(PathResolver.getMainDirectoryPath().resolve(changedListFilePath).toString()));
+             ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)){
+            log.debug("writing changed File list to the file");
+            objectOutputStream.writeObject(changedList);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            view.showInfo("head.file.is.lost");
+        }
+        return changedList;
+    }
+
+    @Override
+    public String save(String... args) {
+        long lastCommitNumber = headService.getHead().getLastCommitNumber();
+        Commit previousCommit = headService.getHead().getCurrentBranch().getLastCommit();
+        List<String> changedList = retrieveChangedList();
+        Commit newCommit = new Commit();
+        newCommit.setId(++lastCommitNumber);
+        newCommit.setMessage(args[0]);
+        TreeMap<String, String> pathMap = new TreeMap<>();
+        if (previousCommit == null) {
+            newCommit.setPreviousCommitId(0);
+        }else {
+            newCommit.setPreviousCommitId(headService.getHead().getCurrentBranch().getLastCommitId());
+            pathMap = previousCommit.getFilePaths();
+        }
+        for (String changedFile : changedList){
+            String commitPath = commitService.saveTrackedFile(newCommit, changedFile);
+            pathMap.put(changedFile, commitPath);
+        }
+        newCommit.setFilePaths(pathMap);
+        commitService.saveCommit(newCommit);
+
+        return "committed";
+    }
+
+
+    private ArrayList<String> collectExistedFiles(){
+        log.debug("collect existed files");
+        ArrayList<String> existedFiles = new ArrayList<>();
+        try {
+            Files.walkFileTree(PathResolver.getCurrentWorkingDirectory(),
+                    new IntegrationFileVisitor(existedFiles));
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+        log.debug("existed file list " + existedFiles);
+
+        return existedFiles;
+    }
+
+    private ArrayList<String> compareFiles(ArrayList<String> existedFiles, TreeMap<String, String> committedFiles){
+        log.debug("compare files");
+        ArrayList<String> editedFiles = new ArrayList<>();
+        for (String existedFilePath : existedFiles) {
+            if (committedFiles.containsKey(existedFilePath)) {
+                File committedFile = concatCommittedFilesPath(existedFilePath, committedFiles.get(existedFilePath)).toFile();
+                File existedFile = new File(existedFilePath);
+                try {
+                    if (!FileUtils.contentEquals(committedFile, existedFile)) {
+                        log.debug(committedFile.toString() + " is not equal " + existedFile.toString());
+                        editedFiles.add(existedFilePath);
+                    }
+                } catch (IOException e) {
+                    log.error(e.getMessage(), e);
+                }
+            } else {
+                editedFiles.add(existedFilePath);
+            }
+        }
+        return editedFiles;
+    }
+
+    private Path concatCommittedFilesPath(String committedFile, String commitPath){
+        TreeMap<String, String> pathMap =
+                headService.getHead().getCurrentBranch().getLastCommit().getFilePaths();
+
+        Path committedFilePath = Paths.get(committedFile);
+        Path relativePath = PathResolver.getCurrentWorkingDirectory().relativize(committedFilePath);
+        Path directory = PathResolver.getObjectsDirectoryPath().resolve(relativePath);
+
+        return directory.resolve(commitPath);
+    }
+
+    private List<String> retrieveChangedList(){
+        List<String> changedList = new ArrayList<>();
+        try {
+            FileInputStream fin = new FileInputStream(
+                    PathResolver.getMainDirectoryPath().resolve(changedListFilePath).toString());
+            ObjectInputStream objectInputStream = new ObjectInputStream(fin);
+            changedList = (List<String>) objectInputStream.readObject();
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            view.showInfo("head.file.is.lost");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return changedList;
+    }
+}
