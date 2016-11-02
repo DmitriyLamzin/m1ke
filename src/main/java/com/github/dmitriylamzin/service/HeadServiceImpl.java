@@ -1,22 +1,16 @@
 package com.github.dmitriylamzin.service;
 
 import com.github.dmitriylamzin.domain.Head;
-import com.github.dmitriylamzin.service.helper.CurrentWorkingDirectoryRetriever;
+import com.github.dmitriylamzin.service.helper.PathResolver;
 import com.github.dmitriylamzin.view.View;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.file.Path;
 @Service
 public class HeadServiceImpl implements HeadService {
-    @Value("${file.head}")
-    String headDirectoryString;
-
-    @Value("${directory.main}")
-    String mainDirectoryString;
 
     @Autowired
     private View view;
@@ -43,9 +37,7 @@ public class HeadServiceImpl implements HeadService {
     }
 
     private Path getPath() {
-        return CurrentWorkingDirectoryRetriever.getCurrentWorkingDirectory()
-                .resolve(mainDirectoryString)
-                .resolve(headDirectoryString);
+        return PathResolver.getHeadFilePath();
     }
 
     public Head getHead() {
