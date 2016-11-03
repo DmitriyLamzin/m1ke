@@ -56,6 +56,7 @@ public class IntegrationServiceImpl implements IntegrationService {
 
     @Override
     public String save(String... args) {
+        log.info("saving changes");
         long lastCommitNumber = headService.getHead().getLastCommitNumber();
         Commit previousCommit = headService.getHead().getCurrentBranch().getLastCommit();
         IntegrationResult integrationResult = retrieveIntegrationResult();
@@ -63,6 +64,7 @@ public class IntegrationServiceImpl implements IntegrationService {
         if (integrationResult.getChangedFiles().size() == 0 &&
                 integrationResult.getRemovedFiles().size() == 0 &&
                 integrationResult.getNewFiles().size() == 0){
+            log.info("no changes");
             return "no.changes";
         }
 
@@ -120,7 +122,7 @@ public class IntegrationServiceImpl implements IntegrationService {
                 File existedFile = new File(existedFilePath);
                 try {
                     if (!FileUtils.contentEquals(committedFile, existedFile)) {
-                        log.debug(committedFile.toString() + " is not equal " + existedFile.toString());
+                        log.info(committedFile.toString() + " is not equal " + existedFile.toString());
                         integrationResult.addChangedFile(existedFilePath);
                     }
                 } catch (IOException e) {
@@ -139,9 +141,13 @@ public class IntegrationServiceImpl implements IntegrationService {
     }
 
     private Path concatCommittedFilesPath(String fileForCommitting, String fileVersionPath){
+        log.info("getting Paths for committing");
         Path committedFilePath = Paths.get(fileForCommitting);
+        log.info("committedFilePath - " + committedFilePath);
         Path relativePath = PathResolver.getCurrentWorkingDirectory().relativize(committedFilePath);
+        log.info("relativePath - " + relativePath);
         Path directory = PathResolver.getObjectsDirectoryPath().resolve(relativePath);
+        log.info("directory - " + directory);
 
         return directory.resolve(fileVersionPath);
     }
@@ -169,6 +175,7 @@ public class IntegrationServiceImpl implements IntegrationService {
             log.error(e.getMessage(), e);
             view.showInfo("file.is.lost");
         } catch (ClassNotFoundException e) {
+            log.debug(e.getMessage(), e);
             e.printStackTrace();
         }
         return integrationResult;
@@ -177,11 +184,14 @@ public class IntegrationServiceImpl implements IntegrationService {
     private String getMessage(String... args){
         String message = null;
         if (args.length == 0 || !args[0].equals("-m")){
+            log.info("save message is not specified" );
             view.showInfo("message.is.missed");
             throw new NullPointerException();
         }else if (args.length ==  2){
-               message = args[1];
+            log.info("save message is " + args[1]);
+            message = args[1];
         }else {
+            log.info("message is not in quotes");
             view.showInfo("message.should.be.in.quotes");
             throw new NullPointerException();
         }
