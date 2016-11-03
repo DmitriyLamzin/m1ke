@@ -40,7 +40,7 @@ public class IntegrationServiceImpl implements IntegrationService {
             log.debug("current branch null");
             branchService.createBranch("master");
             branchService.getBranch("master");
-            view.showInfo("master.branch.created");
+            view.showInfo("default.branch.has.been.created");
             integrationResult.setNewFiles(existedFileArray);
 
         }else if (currentBranch.getLastCommit() == null || currentBranch.getLastCommit().getFilePathKeys().isEmpty()){
@@ -57,7 +57,7 @@ public class IntegrationServiceImpl implements IntegrationService {
             objectOutputStream.writeObject(integrationResult);
         } catch (IOException e) {
             log.error(e.getMessage(), e);
-            view.showInfo("head.file.is.lost");
+            view.showInfo("file.is.lost");
         }
         return integrationResult.toStringArray();
     }
@@ -156,7 +156,7 @@ public class IntegrationServiceImpl implements IntegrationService {
             integrationResult = (IntegrationResult) objectInputStream.readObject();
         } catch (IOException e) {
             log.error(e.getMessage(), e);
-            view.showInfo("head.file.is.lost");
+            view.showInfo("file.is.lost");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
