@@ -65,7 +65,7 @@ public class CommandDispatcherService {
                     if (isInitialized){
                         response.add("m1ke.is.initialized");
                     }else {
-                        response.add("m1ke.is.not.initializes");
+                        response.add("m1ke.is.not.initialized");
                     }
                     break;
                 }case INTEGRATE: {
@@ -84,18 +84,18 @@ public class CommandDispatcherService {
                     break;
                 }case CREATE_BRANCH:{
                     String createBranchResponse = branchService.createBranch(commandArgs);
-                    response.add("m1ke.create.branch.proceed.status");
+                    response.add("m1ke.branch.status");
                     response.add(createBranchResponse);
 
                     break;
                 }case GET_BRANCH:{
                     String getBranchResponse =  branchService.getBranch(commandArgs);
-                    response.add("m1ke.get.branch.status");
+                    response.add("m1ke.branch.status");
                     response.add(getBranchResponse);
                     break;
                 }case REMOVE_BRANCH:{
                     String removeBranchResponse = branchService.removeBranch(commandArgs);
-                    response.add("m1ke.remove.branch.status");
+                    response.add("m1ke.branch.status");
                     response.add(removeBranchResponse);
                     break;
                 }case QUIT:{
