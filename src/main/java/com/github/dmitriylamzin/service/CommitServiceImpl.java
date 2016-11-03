@@ -76,7 +76,11 @@ public class CommitServiceImpl implements CommitService{
                 Files.createDirectories(Paths.get(path).getParent());
                 Files.copy(createdFile,
                         Paths.get(path));
-            } catch (IOException e) {
+            }catch (AccessDeniedException e){
+                log.error(e.getMessage(), e);
+                view.showInfo("access.is.denied");
+                view.showInfo(e.getMessage());
+            }catch (IOException e) {
                 log.error(e.getMessage(), e);
             }
 
