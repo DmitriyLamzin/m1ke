@@ -50,15 +50,7 @@ public class IntegrationServiceImpl implements IntegrationService {
             TreeMap<String, String> committedFiles = currentBranch.getLastCommit().getFilePaths();
             integrationResult = compareFiles(existedFileArray, committedFiles);
         }
-        try (FileOutputStream fileOutputStream = new FileOutputStream(
-                new File(PathResolver.getMainDirectoryPath().resolve(changedListFilePath).toString()));
-             ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)){
-            log.debug("writing changed File list to the file");
-            objectOutputStream.writeObject(integrationResult);
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-            view.showInfo("file.is.lost");
-        }
+        writeIntegrationResult(integrationResult);
         return integrationResult.toStringArray();
     }
 
@@ -68,10 +60,17 @@ public class IntegrationServiceImpl implements IntegrationService {
         Commit previousCommit = headService.getHead().getCurrentBranch().getLastCommit();
         IntegrationResult integrationResult = retrieveIntegrationResult();
 
+        if (integrationResult.getChangedFiles().size() == 0 &&
+                integrationResult.getRemovedFiles().size() == 0 &&
+                integrationResult.getNewFiles().size() == 0){
+            return "no.changes";
+        }
+
+        writeIntegrationResult(new IntegrationResult());
         Commit newCommit = new Commit();
 
         newCommit.setId(++lastCommitNumber);
-        newCommit.setMessage(args[0]);
+        newCommit.setMessage(getMessage(args));
         TreeMap<String, String> pathMap = new TreeMap<>();
 
         if (previousCommit == null) {
@@ -95,7 +94,7 @@ public class IntegrationServiceImpl implements IntegrationService {
         newCommit.setFilePaths(pathMap);
         commitService.saveCommit(newCommit);
 
-        return "committed";
+        return "committed " + newCommit.getMessage();
     }
 
 
@@ -147,6 +146,18 @@ public class IntegrationServiceImpl implements IntegrationService {
         return directory.resolve(fileVersionPath);
     }
 
+    private void writeIntegrationResult(IntegrationResult integrationResult) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(
+                new File(PathResolver.getMainDirectoryPath().resolve(changedListFilePath).toString()));
+             ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)){
+            log.debug("writing changed File list to the file");
+            objectOutputStream.writeObject(integrationResult);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            view.showInfo("file.is.lost");
+        }
+    }
+
     private IntegrationResult retrieveIntegrationResult(){
         IntegrationResult integrationResult = new IntegrationResult();
         try {
@@ -161,5 +172,19 @@ public class IntegrationServiceImpl implements IntegrationService {
             e.printStackTrace();
         }
         return integrationResult;
+    }
+
+    private String getMessage(String... args){
+        String message = null;
+        if (args.length == 0 || !args[0].equals("-m")){
+            view.showInfo("message.is.missed");
+            throw new NullPointerException();
+        }else if (args.length ==  2){
+               message = args[1];
+        }else {
+            view.showInfo("message.should.be.in.quotes");
+            throw new NullPointerException();
+        }
+        return message;
     }
 }
