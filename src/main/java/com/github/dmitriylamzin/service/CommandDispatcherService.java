@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class CommandDispatcherService {
@@ -34,7 +35,7 @@ public class CommandDispatcherService {
     private AppService appService;
     @Autowired
     private BranchService branchService;
-//    @Autowired
+    @Autowired
     private IntegrationService integrationService;
 
 
@@ -68,7 +69,7 @@ public class CommandDispatcherService {
                     }
                     break;
                 }case INTEGRATE: {
-                    ArrayList<String> integrateResponse = integrationService.integrate();
+                    List<String> integrateResponse = integrationService.integrate();
                     if (integrateResponse.size() > 0){
                         response.add("m1ke.integration.success");
                         response.addAll(integrateResponse);
