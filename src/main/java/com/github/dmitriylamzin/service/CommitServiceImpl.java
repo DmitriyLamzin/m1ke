@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,7 +60,11 @@ public class CommitServiceImpl implements CommitService{
         try {
             Files.walkFileTree(PathResolver.getCurrentWorkingDirectory(),
                     new DeletingFileVisitor());
-        } catch (IOException e) {
+        }catch (AccessDeniedException e){
+            log.error(e.getMessage(), e);
+            view.showInfo("access.is.denied");
+            view.showInfo(e.getMessage());
+        }catch (IOException e) {
             log.error(e.getMessage(), e);
         }
         for (String path : commit.getFilePathKeys()){
