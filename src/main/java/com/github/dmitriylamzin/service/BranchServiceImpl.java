@@ -24,6 +24,8 @@ public class BranchServiceImpl implements BranchService {
     private View view;
     @Autowired
     private HeadService headService;
+    @Autowired
+    private CommitService commitService;
 
 
     @Value("${directory.branches}")
@@ -41,28 +43,38 @@ public class BranchServiceImpl implements BranchService {
 
         if (branchCommandArgs.length > 0){
             String branchName = branchCommandArgs[0];
-            Path branchFile = branchStorage.resolve(branchName);
-            if (Files.notExists(branchFile)){
-                Branch creatingBranch = new Branch(branchName);
-                try (FileOutputStream fileOutputStream = new FileOutputStream(branchFile.toString());
-                     ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
-                    objectOutputStream.writeObject(creatingBranch);
-                    objectOutputStream.close();
-                }catch (FileNotFoundException e){
-                    log.error(e.getMessage(), e);
-                    return "branch.has.not.been.created";
-                }catch (IOException e){
-                    log.error(e.getMessage(), e);
-                    return "branch.has.not.been.created";
-                }
+            Branch creatingBranch = new Branch(branchName);
+            if (headService.getHead().getCurrentBranch() != null) {
+                creatingBranch.setLastCommit(headService.getHead().getCurrentBranch().getLastCommit());
+            }
+            if (!saveBranch(creatingBranch)) {
+                return "branch.has.not.been.created";
             }
         }else {
             log.info("branch name is not specified");
             return "branch.name.is.not.specified";
         }
-        log.info("branch has been successfully created");
+        log.info("branch has been successfully ");
         return "branch.has.been.created";
     }
+
+    public boolean saveBranch(Branch creatingBranch) {
+        getBranchStoragePath();
+        Path branchFile = branchStorage.resolve(creatingBranch.getName());
+        try (FileOutputStream fileOutputStream = new FileOutputStream(branchFile.toString());
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
+            objectOutputStream.writeObject(creatingBranch);
+            objectOutputStream.close();
+        }catch (FileNotFoundException e){
+            log.error(e.getMessage(), e);
+            return false;
+        }catch (IOException e){
+            log.error(e.getMessage(), e);
+            return false;
+        }
+        return true;
+    }
+
 
     @Override
     public String getBranch(String... branchCommandArgs) {
@@ -72,6 +84,8 @@ public class BranchServiceImpl implements BranchService {
         head.setCurrentBranch(branch);
         if (branch == null || !headService.saveHead(head)){
             return "branch.is.not.chosen";
+        } else if(branch.getLastCommit() != null) {
+            commitService.checkout(branch.getLastCommit());
         }
         return "branch.is.chosen" ;
     }
