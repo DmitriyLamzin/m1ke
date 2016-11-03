@@ -1,8 +1,8 @@
 package com.github.dmitriylamzin.controller;
 
-import com.github.dmitriylamzin.service.CommandDispatcherService;
 import com.github.dmitriylamzin.service.AppService;
 import com.github.dmitriylamzin.service.BranchService;
+import com.github.dmitriylamzin.service.CommandDispatcherService;
 import com.github.dmitriylamzin.service.IntegrationService;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,11 +48,11 @@ public class CommandDispatcherServiceTest {
                 {"save",
                         new ArrayList<>(Arrays.asList("m1ke.save.proceed.status", "success"))},
                 {"create-branch",
-                        new ArrayList<>(Arrays.asList("m1ke.create.branch.proceed.status", "branch created"))},
+                        new ArrayList<>(Arrays.asList("m1ke.branch.status", "branch created"))},
                 {"get-branch",
-                        new ArrayList<>(Arrays.asList("m1ke.get.branch.status", "branch got"))},
+                        new ArrayList<>(Arrays.asList("m1ke.branch.status", "branch got"))},
                 {"remove-branch",
-                        new ArrayList<>(Arrays.asList("m1ke.remove.branch.status", "branch removed"))},
+                        new ArrayList<>(Arrays.asList("m1ke.branch.status", "branch removed"))},
                 {"quit", new ArrayList<>(Arrays.asList("m1ke.is.not.quit"))},
 
         });
@@ -68,7 +68,9 @@ public class CommandDispatcherServiceTest {
 
         when(appService.init()).thenReturn(true);
         when(appService.quit()).thenReturn(false);
+
         when(branchService.createBranch()).thenReturn("branch created");
+
         when(branchService.getBranch()).thenReturn("branch got");
         when(branchService.removeBranch()).thenReturn("branch removed");
         when(integrationService.integrate()).thenReturn(
@@ -81,7 +83,7 @@ public class CommandDispatcherServiceTest {
     public void dispatchCommandTest(){
         ArrayList<String> result = dispatcher.dispatchCommand(command);
 
-        assertEquals(result, expectedResult);
+        assertEquals(expectedResult, result);
     }
 
     @Test(expected = NullPointerException.class)
