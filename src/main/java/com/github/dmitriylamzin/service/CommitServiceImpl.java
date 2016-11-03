@@ -73,6 +73,7 @@ public class CommitServiceImpl implements CommitService{
             try {
                 Path committedDirectory = PathResolver.getObjectsDirectoryPath().resolve(relativePath);
                 Path createdFile = committedDirectory.resolve(commit.getFilePaths().get(path));
+                Files.createDirectories(Paths.get(path).getParent());
                 Files.copy(createdFile,
                         Paths.get(path));
             } catch (IOException e) {
