@@ -87,7 +87,7 @@ public class CommitServiceImpl implements CommitService{
             objectOutputStream.writeObject(commit);
         } catch (IOException e) {
             log.error(e.getMessage(), e);
-            view.showInfo("head.file.is.lost");
+            view.showInfo("commit.file.is.lost");
             return false;
         }
         return true;
