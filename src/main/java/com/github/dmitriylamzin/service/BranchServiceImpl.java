@@ -137,7 +137,7 @@ public class BranchServiceImpl implements BranchService {
             }
         }else {
             log.info("branch name is not defined");
-            view.showInfo("branch.name.is.not.defined");
+            view.showInfo("branch.name.is.not.specified");
         }
         return branch;
     }
