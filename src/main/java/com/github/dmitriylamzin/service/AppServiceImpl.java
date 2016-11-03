@@ -5,13 +5,10 @@ import com.github.dmitriylamzin.service.helper.PathResolver;
 import com.github.dmitriylamzin.view.View;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Service
 public class AppServiceImpl implements AppService {
