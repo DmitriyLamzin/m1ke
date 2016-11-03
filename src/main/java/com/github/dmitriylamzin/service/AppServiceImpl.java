@@ -1,6 +1,7 @@
 package com.github.dmitriylamzin.service;
 
 import com.github.dmitriylamzin.domain.Head;
+import com.github.dmitriylamzin.service.helper.PathResolver;
 import com.github.dmitriylamzin.view.View;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,35 +23,14 @@ public class AppServiceImpl implements AppService {
     @Autowired
     private HeadService headService;
 
-    private final Path currentWorkingDirectory;
-
-    @Value("${directory.main}")
-    private String mainDirectory;
-
-    @Value("${directory.branches}")
-    private String branchDirectory;
-
-    @Value("${directory.commits}")
-    private String commitDirectory;
-
-    @Value("${directory.objects}")
-    private String objectDirectory;
-
-    @Value("${file.head}")
-    private String headFilePathString;
-
-    private Path mikeMainDirectory;
-
     public AppServiceImpl() {
-        this.currentWorkingDirectory = Paths.get(System.getProperty("user.dir"));
-        log.info("Current Working Directory is " + currentWorkingDirectory.toString());
     }
 
     @Override
     public boolean init() {
         log.info("init() is called");
         try {
-            createM1keDirectories(currentWorkingDirectory);
+            createM1keDirectories();
             createHeadFile();
         } catch (IOException e) {
             view.showInfo("m1ke.initialization.error");
@@ -62,20 +42,15 @@ public class AppServiceImpl implements AppService {
 
 
 
-    private void createM1keDirectories(Path currentWorkingDirectory) throws IOException {
-        mikeMainDirectory = currentWorkingDirectory.resolve(mainDirectory);
-        Path branchDirectoryToCreate = mikeMainDirectory.resolve(branchDirectory);
-        Path commitDirectoryToCreate = mikeMainDirectory.resolve(commitDirectory);
-        Path objectDirectoryToCreate = mikeMainDirectory.resolve(objectDirectory);
-        Files.createDirectories(objectDirectoryToCreate);
-        Files.createDirectories(commitDirectoryToCreate);
-        Files.createDirectories(branchDirectoryToCreate);
-        Files.setAttribute(mikeMainDirectory, "dos:hidden", true);
+    private void createM1keDirectories() throws IOException {
+        Files.createDirectories(PathResolver.getObjectsDirectoryPath());
+        Files.createDirectories(PathResolver.getCommitsDirectoryPath());
+        Files.createDirectories(PathResolver.getBranchesDirectoryPath());
+        Files.setAttribute(PathResolver.getMainDirectoryPath(), "dos:hidden", true);
 
     }
 
     private void createHeadFile() throws IOException {
-        Path headFilePath = mikeMainDirectory.resolve(headFilePathString);
         Head head = new Head();
         headService.saveHead(head);
 
