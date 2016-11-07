@@ -1,9 +1,5 @@
 package com.github.dmitriylamzin.service;
 
-import com.github.dmitriylamzin.service.AppService;
-import com.github.dmitriylamzin.service.BranchService;
-import com.github.dmitriylamzin.service.CommandDispatcherService;
-import com.github.dmitriylamzin.service.IntegrationService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
