@@ -58,4 +58,7 @@ public class AppServiceImpl implements AppService {
         return false;
     }
 
+    public void setHeadService(HeadService headService) {
+        this.headService = headService;
+    }
 }
