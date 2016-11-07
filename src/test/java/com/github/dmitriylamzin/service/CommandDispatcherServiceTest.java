@@ -1,4 +1,4 @@
-package com.github.dmitriylamzin.controller;
+package com.github.dmitriylamzin.service;
 
 import com.github.dmitriylamzin.service.AppService;
 import com.github.dmitriylamzin.service.BranchService;
