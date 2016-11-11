@@ -57,6 +57,31 @@ public class Commit implements Serializable {
         this.filePaths = filePaths;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Commit)) return false;
+
+        Commit commit = (Commit) o;
+
+        if (id != commit.id) return false;
+        if (previousCommitId != commit.previousCommitId) return false;
+        if (message != null ? !message.equals(commit.message) : commit.message != null) return false;
+        if (date != null ? !date.equals(commit.date) : commit.date != null) return false;
+        return !(filePaths != null ? !filePaths.equals(commit.filePaths) : commit.filePaths != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (id ^ (id >>> 32));
+        result = 31 * result + (int) (previousCommitId ^ (previousCommitId >>> 32));
+        result = 31 * result + (message != null ? message.hashCode() : 0);
+        result = 31 * result + (date != null ? date.hashCode() : 0);
+        result = 31 * result + (filePaths != null ? filePaths.hashCode() : 0);
+        return result;
+    }
+
     //    public void setFilePaths(ArrayList<String> filePaths) {
 //        this.filePaths = filePaths;
 //    }
