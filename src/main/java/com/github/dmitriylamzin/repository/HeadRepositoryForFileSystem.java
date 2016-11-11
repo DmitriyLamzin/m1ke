@@ -1,22 +1,22 @@
-package com.github.dmitriylamzin.service;
+package com.github.dmitriylamzin.repository;
 
 import com.github.dmitriylamzin.domain.Head;
 import com.github.dmitriylamzin.service.helper.PathResolver;
 import com.github.dmitriylamzin.view.View;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.nio.file.Path;
-@Service
-public class HeadServiceImpl implements HeadService {
+@Repository
+public class HeadRepositoryForFileSystem implements HeadRepository {
 
     @Autowired
     private View view;
     private final Logger log = Logger.getLogger(this.getClass());
 
-    public HeadServiceImpl() {
+    public HeadRepositoryForFileSystem() {
     }
 
     @Override

@@ -1,8 +1,8 @@
-package com.github.dmitriylamzin.service;
+package com.github.dmitriylamzin.repository;
 
 import com.github.dmitriylamzin.domain.Head;
 
-public interface HeadService {
+public interface HeadRepository {
     boolean saveHead(Head head);
     Head getHead();
 }
