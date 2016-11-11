@@ -1,5 +1,6 @@
 package com.github.dmitriylamzin.service;
 
+import com.github.dmitriylamzin.domain.Commit;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
