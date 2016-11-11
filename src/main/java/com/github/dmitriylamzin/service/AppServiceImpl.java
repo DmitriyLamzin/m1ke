@@ -1,6 +1,7 @@
 package com.github.dmitriylamzin.service;
 
 import com.github.dmitriylamzin.domain.Head;
+import com.github.dmitriylamzin.repository.HeadRepositoryForFileSystem;
 import com.github.dmitriylamzin.service.helper.PathResolver;
 import com.github.dmitriylamzin.view.View;
 import org.apache.log4j.Logger;
@@ -18,9 +19,14 @@ public class AppServiceImpl implements AppService {
     private View view;
 
     @Autowired
-    private HeadService headService;
+    private HeadRepositoryForFileSystem headRepositoryForFileSystem;
 
     public AppServiceImpl() {
+    }
+
+    public AppServiceImpl(HeadRepositoryForFileSystem headRepositoryForFileSystem, View view){
+        this.view = view;
+        this.headRepositoryForFileSystem = headRepositoryForFileSystem;
     }
 
     @Override
@@ -49,7 +55,7 @@ public class AppServiceImpl implements AppService {
 
     private void createHeadFile() throws IOException {
         Head head = new Head();
-        headService.saveHead(head);
+        headRepositoryForFileSystem.saveHead(head);
 
     }
 
@@ -58,7 +64,7 @@ public class AppServiceImpl implements AppService {
         return false;
     }
 
-    public void setHeadService(HeadService headService) {
-        this.headService = headService;
+    public void setHeadRepositoryForFileSystem(HeadRepositoryForFileSystem headRepositoryForFileSystem) {
+        this.headRepositoryForFileSystem = headRepositoryForFileSystem;
     }
 }
