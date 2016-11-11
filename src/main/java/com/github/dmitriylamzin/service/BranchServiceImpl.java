@@ -2,50 +2,39 @@ package com.github.dmitriylamzin.service;
 
 import com.github.dmitriylamzin.domain.Branch;
 import com.github.dmitriylamzin.domain.Head;
+import com.github.dmitriylamzin.repository.BranchRepository;
+import com.github.dmitriylamzin.repository.HeadRepository;
+import com.github.dmitriylamzin.repository.HeadRepositoryForFileSystem;
 import com.github.dmitriylamzin.view.View;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Service
 public class BranchServiceImpl implements BranchService {
 
     private final Logger log = Logger.getLogger(this.getClass());
 
-    private Path branchStorage;
-
     @Autowired
     private View view;
     @Autowired
-    private HeadService headService;
+    private HeadRepository headRepository;
     @Autowired
     private CommitService commitService;
+    @Autowired
+    private BranchRepository branchRepository;
 
-
-    @Value("${directory.branches}")
-    private String branchDirectoryString;
-
-    @Value("${directory.main}")
-    private String mikeDirectoryString;
 
     public BranchServiceImpl() {
     }
 
     @Override
     public String createBranch(String... branchCommandArgs) {
-        getBranchStoragePath();
-
         if (branchCommandArgs.length > 0){
             String branchName = branchCommandArgs[0];
             Branch creatingBranch = new Branch(branchName);
-            if (headService.getHead().getCurrentBranch() != null) {
-                creatingBranch.setLastCommit(headService.getHead().getCurrentBranch().getLastCommit());
+            if (headRepository.getHead().getCurrentBranch() != null) {
+                creatingBranch.setLastCommit(headRepository.getHead().getCurrentBranch().getLastCommit());
             }
             if (!saveBranch(creatingBranch)) {
                 return "branch.has.not.been.created";
@@ -59,30 +48,17 @@ public class BranchServiceImpl implements BranchService {
     }
 
     public boolean saveBranch(Branch creatingBranch) {
-        getBranchStoragePath();
-        Path branchFile = branchStorage.resolve(creatingBranch.getName());
-        try (FileOutputStream fileOutputStream = new FileOutputStream(branchFile.toString());
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
-            objectOutputStream.writeObject(creatingBranch);
-            objectOutputStream.close();
-        }catch (FileNotFoundException e){
-            log.error(e.getMessage(), e);
-            return false;
-        }catch (IOException e){
-            log.error(e.getMessage(), e);
-            return false;
-        }
-        return true;
+        return branchRepository.saveBranch(creatingBranch);
+
     }
 
 
     @Override
     public String getBranch(String... branchCommandArgs) {
-        getBranchStoragePath();
-        Head head = headService.getHead();
+        Head head = headRepository.getHead();
         Branch branch = getBranchFromFile(branchCommandArgs);
         head.setCurrentBranch(branch);
-        if (branch == null || !headService.saveHead(head)){
+        if (branch == null || !headRepository.saveHead(head)){
             return "branch.is.not.chosen";
         } else if(branch.getLastCommit() != null) {
             commitService.checkout(branch.getLastCommit());
@@ -93,12 +69,11 @@ public class BranchServiceImpl implements BranchService {
     @Override
     public String removeBranch(String... branchCommandArgs) {
         log.info("removing branch is proceeded " + branchCommandArgs[0]);
-        getBranchStoragePath();
-        Head head = headService.getHead();
+        Head head = headRepository.getHead();
         Branch branchToDelete = getBranchFromFile(branchCommandArgs);
         if (branchToDelete == null){
             return "branch.is.not.deleted";
-        }else if (head.getCurrentBranch().getName().equals(branchToDelete.getName())){
+            }else if (head.getCurrentBranch().getName().equals(branchToDelete.getName())){
             return "branch.is.active";
         }else {
             if (deleteBranchFile(branchCommandArgs)){
@@ -110,31 +85,12 @@ public class BranchServiceImpl implements BranchService {
     }
 
 
-    private void getBranchStoragePath() {
-        Path currentWorkingDirectory = Paths.get(System.getProperty("user.dir"));
-        this.branchStorage = currentWorkingDirectory.
-                resolve(mikeDirectoryString).
-                resolve(branchDirectoryString);
-        log.info("Branch storage Directory is " + branchStorage.toString());
-    }
-
     private Branch getBranchFromFile(String... branchCommandArgs){
         Branch branch = null;
         if (branchCommandArgs.length > 0) {
             log.info("getting  branch from file with name " + branchCommandArgs[0]);
-            Path branchFile = branchStorage.resolve(branchCommandArgs[0]);
-            try (FileInputStream fin = new FileInputStream(branchFile.toString());
-                 ObjectInputStream ois = new ObjectInputStream(fin)) {
-                try {
-                    branch = (Branch) ois.readObject();
-                    ois.close();
-                } catch (ClassNotFoundException e) {
-                    log.debug("class was not found" + e.getMessage() + e);
-                }
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-                view.showInfo("branch.file.is.lost");
-            }
+            branch = branchRepository.getBranch(branchCommandArgs[0]);
+
         }else {
             log.info("branch name is not defined");
             view.showInfo("branch.name.is.not.specified");
@@ -143,14 +99,29 @@ public class BranchServiceImpl implements BranchService {
     }
 
     private boolean deleteBranchFile(String... branchCommandArgs){
-        log.info("deleting file with name " + branchCommandArgs[0]);
-        try {
-            Files.deleteIfExists(branchStorage.resolve(branchCommandArgs[0]));
-            log.info("File with name " + branchCommandArgs[0] + " is deleted");
-            return true;
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
+        if (branchCommandArgs.length > 0) {
+            log.info("deleting  branch from file with name " + branchCommandArgs[0]);
+            return branchRepository.deleteBranch(branchCommandArgs[0]);
+        }else {
+            log.info("branch name is not defined");
+            view.showInfo("branch.name.is.not.specified");
         }
         return false;
+    }
+
+    public void setView(View view) {
+        this.view = view;
+    }
+
+    public void setHeadRepository(HeadRepository headRepository) {
+        this.headRepository = headRepository;
+    }
+
+    public void setCommitService(CommitService commitService) {
+        this.commitService = commitService;
+    }
+
+    public void setBranchRepository(BranchRepository branchRepository) {
+        this.branchRepository = branchRepository;
     }
 }
