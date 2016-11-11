@@ -3,6 +3,8 @@ package com.github.dmitriylamzin.service;
 import com.github.dmitriylamzin.domain.Branch;
 import com.github.dmitriylamzin.domain.Commit;
 import com.github.dmitriylamzin.domain.IntegrationResult;
+import com.github.dmitriylamzin.repository.HeadRepositoryForFileSystem;
+import com.github.dmitriylamzin.repository.IntegrationResultRepository;
 import com.github.dmitriylamzin.service.helper.PathResolver;
 import com.github.dmitriylamzin.view.View;
 import org.apache.commons.io.FileUtils;
@@ -19,21 +21,22 @@ import java.util.*;
 @Service
 public class IntegrationServiceImpl implements IntegrationService {
     private Logger log = Logger.getLogger(this.getClass());
-    private final String changedListFilePath = "changedList";
     @Autowired
     private View view;
     @Autowired
-    private HeadService headService;
+    private HeadRepositoryForFileSystem headRepositoryForFileSystem;
     @Autowired
     private BranchService branchService;
     @Autowired
     private CommitService commitService;
+    @Autowired
+    private IntegrationResultRepository integrationResultRepository;
 
     @Override
     public List<String> integrate() {
         log.info("integrate command");
         ArrayList<String> existedFileArray = collectExistedFiles();
-        Branch currentBranch = headService.getHead().getCurrentBranch();
+        Branch currentBranch = headRepositoryForFileSystem.getHead().getCurrentBranch();
         IntegrationResult integrationResult = new IntegrationResult();
 
         if (currentBranch == null){
@@ -50,16 +53,16 @@ public class IntegrationServiceImpl implements IntegrationService {
             TreeMap<String, String> committedFiles = currentBranch.getLastCommit().getFilePaths();
             integrationResult = compareFiles(existedFileArray, committedFiles);
         }
-        writeIntegrationResult(integrationResult);
+        integrationResultRepository.saveIntegrationResult(integrationResult);
         return integrationResult.toStringArray();
     }
 
     @Override
     public String save(String... args) {
         log.info("saving changes");
-        long lastCommitNumber = headService.getHead().getLastCommitNumber();
-        Commit previousCommit = headService.getHead().getCurrentBranch().getLastCommit();
-        IntegrationResult integrationResult = retrieveIntegrationResult();
+        long lastCommitNumber = headRepositoryForFileSystem.getHead().getLastCommitNumber();
+        Commit previousCommit = headRepositoryForFileSystem.getHead().getCurrentBranch().getLastCommit();
+        IntegrationResult integrationResult = integrationResultRepository.getIntegrationResult();
 
         if (integrationResult.getChangedFiles().size() == 0 &&
                 integrationResult.getRemovedFiles().size() == 0 &&
@@ -68,7 +71,7 @@ public class IntegrationServiceImpl implements IntegrationService {
             return "no.changes";
         }
 
-        writeIntegrationResult(new IntegrationResult());
+        integrationResultRepository.saveIntegrationResult(new IntegrationResult());
         Commit newCommit = new Commit();
 
         newCommit.setId(++lastCommitNumber);
@@ -78,7 +81,7 @@ public class IntegrationServiceImpl implements IntegrationService {
         if (previousCommit == null) {
             newCommit.setPreviousCommitId(0);
         }else {
-            newCommit.setPreviousCommitId(headService.getHead().getCurrentBranch().getLastCommitId());
+            newCommit.setPreviousCommitId(headRepositoryForFileSystem.getHead().getCurrentBranch().getLastCommitId());
             pathMap = previousCommit.getFilePaths();
         }
         for (String changedFile : integrationResult.getChangedFiles()){
@@ -152,35 +155,6 @@ public class IntegrationServiceImpl implements IntegrationService {
         return directory.resolve(fileVersionPath);
     }
 
-    private void writeIntegrationResult(IntegrationResult integrationResult) {
-        try (FileOutputStream fileOutputStream = new FileOutputStream(
-                new File(PathResolver.getMainDirectoryPath().resolve(changedListFilePath).toString()));
-             ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)){
-            log.debug("writing changed File list to the file");
-            objectOutputStream.writeObject(integrationResult);
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-            view.showInfo("file.is.lost");
-        }
-    }
-
-    private IntegrationResult retrieveIntegrationResult(){
-        IntegrationResult integrationResult = new IntegrationResult();
-        try {
-            FileInputStream fin = new FileInputStream(
-                    PathResolver.getMainDirectoryPath().resolve(changedListFilePath).toString());
-            ObjectInputStream objectInputStream = new ObjectInputStream(fin);
-            integrationResult = (IntegrationResult) objectInputStream.readObject();
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-            view.showInfo("file.is.lost");
-        } catch (ClassNotFoundException e) {
-            log.debug(e.getMessage(), e);
-            e.printStackTrace();
-        }
-        return integrationResult;
-    }
-
     private String getMessage(String... args){
         String message = null;
         if (args.length == 0 || !args[0].equals("-m")){
@@ -196,5 +170,25 @@ public class IntegrationServiceImpl implements IntegrationService {
             throw new NullPointerException();
         }
         return message;
+    }
+
+    public void setView(View view) {
+        this.view = view;
+    }
+
+    public void setHeadRepositoryForFileSystem(HeadRepositoryForFileSystem headRepositoryForFileSystem) {
+        this.headRepositoryForFileSystem = headRepositoryForFileSystem;
+    }
+
+    public void setBranchService(BranchService branchService) {
+        this.branchService = branchService;
+    }
+
+    public void setCommitService(CommitService commitService) {
+        this.commitService = commitService;
+    }
+
+    public void setIntegrationResultRepository(IntegrationResultRepository integrationResultRepository) {
+        this.integrationResultRepository = integrationResultRepository;
     }
 }
