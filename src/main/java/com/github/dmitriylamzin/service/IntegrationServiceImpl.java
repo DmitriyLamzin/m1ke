@@ -71,7 +71,6 @@ public class IntegrationServiceImpl implements IntegrationService {
             return "no.changes";
         }
 
-        integrationResultRepository.saveIntegrationResult(new IntegrationResult());
         Commit newCommit = new Commit();
 
         newCommit.setId(++lastCommitNumber);
@@ -97,7 +96,9 @@ public class IntegrationServiceImpl implements IntegrationService {
         }
 
         newCommit.setFilePaths(pathMap);
-        commitService.saveCommit(newCommit);
+        if (commitService.saveCommit(newCommit)){
+            integrationResultRepository.saveIntegrationResult(new IntegrationResult());
+        }
 
         return "committed " + newCommit.getMessage();
     }

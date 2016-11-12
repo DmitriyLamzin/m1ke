@@ -60,7 +60,7 @@ public class CommitServiceImpl implements CommitService{
             return false;
         }
         for (String path : commit.getFilePathKeys()){
-            if (!retrieveFile(commit.getFilePaths().get(path))){
+            if (!retrieveFile(path, commit.getFilePaths().get(path))){
                 return false;
             }
 
@@ -68,12 +68,12 @@ public class CommitServiceImpl implements CommitService{
         return true;
     }
 
-    private boolean retrieveFile(String path) {
+    private boolean retrieveFile(String path, String fileName) {
         Path relativePath = PathResolver.getCurrentWorkingDirectory().relativize(Paths.get(path));
         log.debug(relativePath);
         try {
             Path committedDirectory = PathResolver.getObjectsDirectoryPath().resolve(relativePath);
-            Path createdFile = committedDirectory.resolve(path);
+            Path createdFile = committedDirectory.resolve(fileName);
             Files.createDirectories(Paths.get(path).getParent());
             Files.copy(createdFile,
                     Paths.get(path));
